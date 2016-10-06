@@ -11,41 +11,15 @@ def load_data(filepath):
 
 
 def get_biggest_bar(data):
-    temp_big = []
-    for bar in data:
-        if not temp_big or get_SeatsCount(temp_big[0]) \
-                < bar["Cells"].get("SeatsCount"):
-            temp_big.clear()
-            temp_big.append(bar)
-        elif temp_big and get_SeatsCount(temp_big[0]) \
-                == bar["Cells"].get("SeatsCount"):
-            temp_big.append(bar)
-    return temp_big
+    return max(data, key=lambda x:x["Cells"].get("SeatsCount"))
 
 
 def get_smallest_bar(data):
-    temp_small = []
-    for bar in data:
-        if not temp_small or get_SeatsCount(temp_small[0]) > \
-                bar["Cells"].get("SeatsCount"):
-            temp_small.clear()
-            temp_small.append(bar)
-        elif temp_small and get_SeatsCount(temp_small[0]) \
-                == bar["Cells"].get("SeatsCount"):
-            temp_small.append(bar)
-    return temp_small
+    return min(data, key=lambda x:x["Cells"].get("SeatsCount"))
 
 
 def get_closest_bar(data, longitude, latitude):
-    temp_closest = None
-    temp_distance = None
-    for bar in data:
-        if temp_closest is None or temp_distance > \
-                calculate_distance(get_point(bar), [longitude, latitude]):
-            temp_closest = bar
-            temp_distance = calculate_distance(get_point(temp_closest), \
-                [longitude, latitude])
-    return temp_closest
+    return min(data, key=lambda x:calculate_distance(get_point(x), [longitude, latitude]))
 
 
 def calculate_distance(point_one, point_two):
@@ -57,10 +31,6 @@ def get_point(bar):
     return bar["Cells"].get("geoData").get("coordinates")
 
 
-def get_SeatsCount(bar):
-    return bar.get("Cells").get("SeatsCount")
-
-
 def get_param(argv):
     minimal = {"--minimal", "-m"}
     biggest = {"--biggest", "-b"}
@@ -70,11 +40,11 @@ def get_param(argv):
     key_error = "Не опознанный ключ, для справки используйте ключ -h\n"
     manual = "Данный скрипт предназаначен для получения информации \
 o барах в виде json документа \
-\n--minimal, -m \t- возвращает json документ со списком \
-наименьших баров по колличеству мест\
+\n--minimal, -m \t- возвращает json документ с наименьшим баром \
+по колличеству мест\
 \n\t bars.py -m bars_list.json\
-\n--biggest, -b \t- возвращает json документ со списком \
-наибольших баров по колличеству мест\
+\n--biggest, -b \t- возвращает json документ с наибольшим баром \
+по колличеству мест\
 \n\t bars.py -b bars_list.json\
 \n--closest, -c \t- возвращает json документ с ближайшим баром \
 относительно координат заданных в виде float числа\
