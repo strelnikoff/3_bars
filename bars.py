@@ -1,6 +1,4 @@
-import json
-import os
-import sys
+import json, os, argparse
 
 
 def load_data(filepath):
@@ -10,16 +8,19 @@ def load_data(filepath):
         return json.load(file_handler)
 
 
-def get_biggest_bar(data):
+def get_biggest_bar(args):
+    data = load_data(args.file)
     return max(data, key=lambda x:x["Cells"].get("SeatsCount"))
 
 
-def get_smallest_bar(data):
+def get_smallest_bar(args):
+    data = load_data(args.file)
     return min(data, key=lambda x:x["Cells"].get("SeatsCount"))
 
 
-def get_closest_bar(data, longitude, latitude):
-    return min(data, key=lambda x:calculate_distance(get_point(x), [longitude, latitude]))
+def get_closest_bar(args):
+    data = load_data(args.file)
+    return min(data, key=lambda x:calculate_distance(get_point(x), [args.longitude, args.latitude]))
 
 
 def calculate_distance(point_one, point_two):
@@ -31,55 +32,24 @@ def get_point(bar):
     return bar["Cells"].get("geoData").get("coordinates")
 
 
-def get_param(argv):
-    minimal = {"--minimal", "-m"}
-    biggest = {"--biggest", "-b"}
-    wathit = {"--help", "-h"}
-    closest = {"--closest", "-c"}
-    file_error = "Файл не найден, для справки используйте ключ -h\n"
-    key_error = "Не опознанный ключ, для справки используйте ключ -h\n"
-    manual = "Данный скрипт предназаначен для получения информации \
-o барах в виде json документа \
-\n--minimal, -m \t- возвращает json документ с наименьшим баром \
-по колличеству мест\
-\n\t bars.py -m bars_list.json\
-\n--biggest, -b \t- возвращает json документ с наибольшим баром \
-по колличеству мест\
-\n\t bars.py -b bars_list.json\
-\n--closest, -c \t- возвращает json документ с ближайшим баром \
-относительно координат заданных в виде float числа\
-\n\t bars.py -c 50.706200 51.300010 bars_list.json\
-\n--help, -h \t- показывает эту справку\
-\n\t bats.py -h\n"
+def parse_args():
+    parser = argparse.ArgumentParser(description='Bar json utility')
+    subparsers = parser.add_subparsers()
+    parser.add_argument('file', type = str, help = 'Json file with bars')
 
-    if len(argv) == 3 and argv[1] in minimal:
-        data = load_data(argv[2])
-        if data is not None:
-            return get_smallest_bar(data).__str__()
-        else:
-            return file_error
-    elif len(argv) == 3 and argv[1] in biggest:
-        data = load_data(argv[2])
-        if data is not None:
-            return get_biggest_bar(data).__str__()
-        else:
-            return file_error
-    elif len(argv) == 5 and argv[1] in closest:
-        data = load_data(argv[4])
-        if data is not None:
-            x = float(argv[2])
-            y = float(argv[3])
-            if x is not None and y is not None:
-                return get_closest_bar(data, x, y).__str__()
-            else:
-                return key_error
-        else:
-            return file_error
-    elif len(argv) == 2 and argv[1] in wathit:
-        return manual
-    else:
-        return key_error + manual
+    parser_biggest = subparsers.add_parser('biggest', help = 'Rerurn biggest bar')
+    parser_biggest.set_defaults(func = get_biggest_bar)
 
+    parser_smallest = subparsers.add_parser('smallest', help = 'Rerurn smallest bar')
+    parser_smallest.set_defaults(func = get_smallest_bar) 
+
+    parser_closest = subparsers.add_parser('closest', help = 'Rerurn closest bar')
+    parser_closest.add_argument('longitude', type = float, help = 'you longitude')
+    parser_closest.add_argument('latitude', type = float, help = 'you latitude')
+    parser_closest.set_defaults(func = get_closest_bar)
+
+    return parser.parse_args()
 
 if __name__ == '__main__':
-    print(get_param(sys.argv))
+    args = parse_args()
+    print(args.func(args))
